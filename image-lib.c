@@ -3,6 +3,8 @@
 #include <dirent.h>
 #include <assert.h>
 #include <time.h>
+#include <string.h>
+
 /******************************************************************************
  * texture_image()
  *
@@ -280,4 +282,79 @@ struct timespec diff_timespec(const struct timespec *time1, const struct timespe
     diff.tv_sec--;
   }
   return diff;
+}
+
+/******************************************************************************
+ * get_images()
+ *
+ * Arguments: folder in which image-list.txt is in
+ * Returns: array with the images' names
+ * Side-Effects: none
+ *
+ * Description: returns and array with every image's file name
+ *
+ *****************************************************************************/
+char** get_images(char *folder){
+
+	char file[256];
+	strcpy(file, folder);
+	strcat(file, "/image-list.txt");
+	FILE *image_txt = fopen(file, "r");
+	
+	int array_cap = 10;
+	char **images = malloc(array_cap * sizeof(char *));;
+	int n_images = 0;
+	char line[256];
+
+    // Read lines from the file
+    while (fgets(line, sizeof(line), image_txt) != NULL) {
+        // Remove newline character, if present
+        char *newline = strchr(line, '\n');
+        if (newline != NULL) {
+            *newline = '\0';
+        }
+
+        // Allocate memory for the new string
+        char *newImage = strdup(line);
+
+        // Resize the array of strings
+        if (n_images == array_cap) {
+            // Double the capacity
+            array_cap *= 2;
+            images = realloc(images, array_cap * sizeof(char *));
+   	    }
+	 	images[n_images] = newImage;
+        n_images++;
+	}
+
+	images = realloc(images, (n_images + 1) * sizeof(char *));
+  
+    images[n_images] = NULL;
+
+	fclose(image_txt);
+
+	return images;
+}
+
+/******************************************************************************
+ * free_array()
+ *
+ * Arguments: array
+ * Returns: nothing
+ * Side-Effects: none
+ *
+ * Description: frees an array
+ *
+ *****************************************************************************/
+
+void free_array(char** array){
+
+	int i = 0;
+
+	while(array[i] != NULL){
+		free(array[i]);
+		i++;
+	}
+
+	return;
 }

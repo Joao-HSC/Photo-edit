@@ -39,15 +39,16 @@ int main(int argc, char *argv[]){
     struct timespec start_time_par, end_time_par;
 
 	if(argc != 3) return 0;
+	int thread_aux = atoi(argv[2]);
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time_total);
 	clock_gettime(CLOCK_MONOTONIC, &start_time_seq);
 
 	/* array containg the names of files to be processed	 */
-	char * files [] =  {"IST-0.jpeg", "IST-1.jpeg", "IST-2.jpeg", "IST-3.jpeg", "IST-4.jpeg", "IST-5.jpeg", "IST-6.jpeg", "IST-7.jpeg", "IST-8.jpeg", "IST-9.jpeg"};
+	char **files =  get_images(argv[1]);
+	
 	/* length of the files array (number of files to be processed	 */
 	int nn_files = 10;
-
 
 	/* file name of the image created and to be saved on disk	 */
 	char out_file_name[100];
@@ -72,13 +73,16 @@ int main(int argc, char *argv[]){
 	clock_gettime(CLOCK_MONOTONIC, &end_time_seq);
 	clock_gettime(CLOCK_MONOTONIC, &start_time_par);
 
-	/* Iteration over all the files to resize images
-	 */
-	for (int i = 0; i < nn_files; i++){	
-
+	/* thread initialization */
+	pthread_t thread_id[thread_aux];
+	/* Iteration over all the files to resize images */
+	char filepath[256];
+	int i = 0;
+	while(files[i] != NULL){	
+		snprintf(filepath, sizeof(filepath), "./%s/%s", argv[1], files[i]);
 		printf("image %s\n", files[i]);
 		/* load of the input file */
-	    in_img = read_jpeg_file(files[i]);
+	    in_img = read_jpeg_file(filepath);
 		if (in_img == NULL){
 			fprintf(stderr, "Impossible to read %s image\n", files[i]); 
 			continue;
@@ -98,8 +102,9 @@ int main(int argc, char *argv[]){
 		gdImageDestroy(out_sepia_img);
 		gdImageDestroy(out_contrast_img);
 		gdImageDestroy(in_img);
+		i++;
 	}
-
+	free_array(files);
 	clock_gettime(CLOCK_MONOTONIC, &end_time_par);
 	clock_gettime(CLOCK_MONOTONIC, &end_time_total);
 

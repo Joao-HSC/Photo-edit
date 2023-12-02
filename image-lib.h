@@ -119,5 +119,8 @@ int write_jpeg_file(gdImagePtr write_img, char * file_name);
  *****************************************************************************/
 int create_directory(char * dir_name);
 
+char** get_images(char *folder);
+
+void free_array(char** array);
 
 struct timespec diff_timespec(const struct timespec *time1, const struct timespec *time0);
