@@ -3,7 +3,8 @@
 #include <dirent.h>
 #include <assert.h>
 #include <time.h>
-#include <string.h>
+#include <string.h>/* the directories wher output files will be placed */
+#define OLD_IMAGE_DIR "./Old-image-dir/"
 
 /******************************************************************************
  * texture_image()
@@ -306,20 +307,20 @@ char** get_images(char *folder){
 	int n_images = 0;
 	char line[256];
 
-    // Read lines from the file
+    /* Read lines from the file */
     while (fgets(line, sizeof(line), image_txt) != NULL) {
-        // Remove newline character, if present
+        /* Remove newline character, if present */
         char *newline = strchr(line, '\n');
         if (newline != NULL) {
             *newline = '\0';
         }
 
-        // Allocate memory for the new string
+        /* Allocate memory for the new string */
         char *newImage = strdup(line);
 
-        // Resize the array of strings
+        /* Resize the array of strings */
         if (n_images == array_cap) {
-            // Double the capacity
+            /* Double the capacity */
             array_cap *= 2;
             images = realloc(images, array_cap * sizeof(char *));
    	    }
@@ -357,4 +358,80 @@ void free_array(char** array){
 	}
 
 	return;
+}
+/******************************************************************************
+ * image_transform()
+ *
+ * Arguments: input image, .png transformation
+ * Returns: output image
+ * Side-Effects: none
+ *
+ * Description: applies the desired transformations to the input image
+ *
+ *****************************************************************************/
+gdImagePtr image_transform(gdImagePtr input, gdImagePtr png_transform){
+
+	/* output images */
+	gdImagePtr out_smoothed_img;
+	gdImagePtr out_contrast_img;
+	gdImagePtr out_textured_img;
+	gdImagePtr out_sepia_img;
+
+	out_contrast_img = contrast_image(input);
+	out_smoothed_img = smooth_image(out_contrast_img);
+	out_textured_img = texture_image(out_smoothed_img , png_transform);
+	out_sepia_img = sepia_image(out_textured_img); 
+
+	/* save resized */
+	gdImageDestroy(out_contrast_img); 
+	gdImageDestroy(out_smoothed_img);
+	gdImageDestroy(out_textured_img);
+
+	return out_sepia_img;
+}
+
+/******************************************************************************
+ * thread_func()
+ *
+ * Arguments: struct
+ * Returns: NULL
+ * Side-Effects: none
+ *
+ * Description: applies the desired transformations to the input image and writes
+ * 				it in the desired folder
+ *
+ *****************************************************************************/
+void* thread_func(void* params){
+
+	/* copy of the struct */
+	Thread_params* thread_params = (Thread_params*)params;
+	
+	/* file name of the image created and to be saved on disk	 */
+	char out_file_name[100];
+
+	gdImagePtr out_img;
+	char filepath[256];
+
+	sprintf(filepath, "%s/%s", thread_params->arg, thread_params->file);
+			printf("image %s\n", thread_params->file);
+			/* load of the input file */
+			gdImagePtr in_img = read_jpeg_file(filepath);
+			if (in_img == NULL){
+				printf("Impossible to read %s image\n", thread_params->file);
+				return NULL; 
+			}
+			
+			out_img = image_transform(in_img, thread_params->png_img);
+
+			/* save resized */ 
+			sprintf(out_file_name, "%s%s", OLD_IMAGE_DIR, thread_params->file);
+
+			if(write_jpeg_file(out_img, out_file_name) == 0){
+				fprintf(stderr, "Impossible to write %s image\n", out_file_name);
+			}
+			
+			gdImageDestroy(in_img);
+			gdImageDestroy(out_img);
+			
+	return NULL;
 }

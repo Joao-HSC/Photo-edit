@@ -1,5 +1,5 @@
 #include "gd.h"
-
+#define OLD_IMAGE_DIR "./Old-image-dir/"
 
 /******************************************************************************
  * texture_image()
@@ -119,8 +119,60 @@ int write_jpeg_file(gdImagePtr write_img, char * file_name);
  *****************************************************************************/
 int create_directory(char * dir_name);
 
+/******************************************************************************
+ * get_images()
+ *
+ * Arguments: folder in which image-list.txt is in
+ * Returns: array with the images' names
+ * Side-Effects: none
+ *
+ * Description: returns and array with every image's file name
+ *
+ *****************************************************************************/
 char** get_images(char *folder);
 
+/******************************************************************************
+ * free_array()
+ *
+ * Arguments: array
+ * Returns: nothing
+ * Side-Effects: none
+ *
+ * Description: frees an array
+ *
+ *****************************************************************************/
 void free_array(char** array);
+
+/******************************************************************************
+ * image_transform()
+ *
+ * Arguments: input image, .png transformation
+ * Returns: output image
+ * Side-Effects: none
+ *
+ * Description: applies the desired transformations to the input image
+ *
+ *****************************************************************************/
+gdImagePtr image_transform(gdImagePtr input, gdImagePtr png_transform);
+
+/******************************************************************************
+ * thread_func()
+ *
+ * Arguments: struct
+ * Returns: NULL
+ * Side-Effects: none
+ *
+ * Description: applies the desired transformations to the input image and writes
+ * 				it in the desired folder
+ *
+ *****************************************************************************/
+void* thread_func(void* params);
+
+/* structure for the thread parameters */
+typedef struct{
+    char* arg;
+    char* file;
+    gdImagePtr png_img;
+} Thread_params;
 
 struct timespec diff_timespec(const struct timespec *time1, const struct timespec *time0);

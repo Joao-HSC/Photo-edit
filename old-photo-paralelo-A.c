@@ -18,9 +18,6 @@
 #include <pthread.h>
 #include "image-lib.h"
 
-/* the directories wher output files will be placed */
-#define OLD_IMAGE_DIR "./Old-image-dir/"
-
 /******************************************************************************
  * main()
  *
@@ -39,27 +36,16 @@ int main(int argc, char *argv[]){
     struct timespec start_time_par, end_time_par;
 
 	if(argc != 3) return 0;
-	int thread_aux = atoi(argv[2]);
+	int thread_num = atoi(argv[2]);
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time_total);
 	clock_gettime(CLOCK_MONOTONIC, &start_time_seq);
 
 	/* array containg the names of files to be processed	 */
 	char **files =  get_images(argv[1]);
-	
-	/* length of the files array (number of files to be processed	 */
-	int nn_files = 10;
-
-	/* file name of the image created and to be saved on disk	 */
-	char out_file_name[100];
 
 	/* input images */
 	gdImagePtr in_img;
-	/* output images */
-	gdImagePtr out_smoothed_img;
-	gdImagePtr out_contrast_img;
-	gdImagePtr out_textured_img;
-	gdImagePtr out_sepia_img;
 
 	/* creation of output directories */
 	if (create_directory(OLD_IMAGE_DIR) == 0){
@@ -69,40 +55,33 @@ int main(int argc, char *argv[]){
 
 	gdImagePtr in_texture_img =  read_png_file("./paper-texture.png");
 
-
 	clock_gettime(CLOCK_MONOTONIC, &end_time_seq);
 	clock_gettime(CLOCK_MONOTONIC, &start_time_par);
 
 	/* thread initialization */
-	pthread_t thread_id[thread_aux];
+	pthread_t thread_id[thread_num];
+
 	/* Iteration over all the files to resize images */
-	char filepath[256];
 	int i = 0;
-	while(files[i] != NULL){	
-		snprintf(filepath, sizeof(filepath), "./%s/%s", argv[1], files[i]);
-		printf("image %s\n", files[i]);
-		/* load of the input file */
-	    in_img = read_jpeg_file(filepath);
-		if (in_img == NULL){
-			fprintf(stderr, "Impossible to read %s image\n", files[i]); 
-			continue;
+	Thread_params* params[thread_num];
+	while(files[i] != NULL){
+
+		for(int j = 0; j < thread_num; j++){
+
+			params[j] = malloc(sizeof(Thread_params));
+			params[j]->arg = argv[1];
+			params[j]->png_img = in_texture_img;
+			params[j]->file = files[i];
+
+			pthread_create(&thread_id[j], NULL, thread_func, (void*)params[j]);
+
+			i++;
 		}
 
-		out_contrast_img = contrast_image(in_img);
-		out_smoothed_img = smooth_image(out_contrast_img);
-		out_textured_img = texture_image(out_smoothed_img , in_texture_img);
-		out_sepia_img = sepia_image(out_textured_img); 
-
-		/* save resized */ 
-		sprintf(out_file_name, "%s%s", OLD_IMAGE_DIR, files[i]);
-		if(write_jpeg_file(out_sepia_img, out_file_name) == 0){
-			fprintf(stderr, "Impossible to write %s image\n", out_file_name);
-		}
-		gdImageDestroy(out_smoothed_img);
-		gdImageDestroy(out_sepia_img);
-		gdImageDestroy(out_contrast_img);
-		gdImageDestroy(in_img);
-		i++;
+		for (int j = 0; j < thread_num; j++) {
+			pthread_join(thread_id[j], NULL);
+			free(params[j]);
+    }
 	}
 	free_array(files);
 	clock_gettime(CLOCK_MONOTONIC, &end_time_par);
