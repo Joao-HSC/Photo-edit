@@ -63,10 +63,17 @@ int main(int argc, char *argv[]){
 
 	/* Iteration over all the files to resize images */
 	int i = 0;
+	int aux = thread_num;
+	
+	/* we can pass multiple elements through a single argument by using a struct */
 	Thread_params* params[thread_num];
-	while(files[i] != NULL){
 
-		for(int j = 0; j < thread_num; j++){
+	while (files[i] != NULL) {
+		for (int j = 0; j < thread_num; j++) {
+			if (files[i] == NULL) {
+				aux = j;  /* update the outer aux variable */
+				break;    /* exit the loop when files[i] is NULL */
+			}
 
 			params[j] = malloc(sizeof(Thread_params));
 			params[j]->arg = argv[1];
@@ -78,12 +85,14 @@ int main(int argc, char *argv[]){
 			i++;
 		}
 
-		for (int j = 0; j < thread_num; j++) {
-			pthread_join(thread_id[j], NULL);
-			free(params[j]);
-    }
+		/* wait for threads to finish */
+		for (int k = 0; k < aux; k++) {
+			pthread_join(thread_id[k], NULL);
+			free(params[k]);
+		}
 	}
 	free_array(files);
+
 	clock_gettime(CLOCK_MONOTONIC, &end_time_par);
 	clock_gettime(CLOCK_MONOTONIC, &end_time_total);
 
