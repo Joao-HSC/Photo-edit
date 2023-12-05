@@ -83,7 +83,7 @@ gdImagePtr  smooth_image(gdImagePtr in_img){
  * Description: creates clone of image but its contrast reduced
  *
  *****************************************************************************/
-gdImagePtr  contrast_image(gdImagePtr in_img){
+gdImagePtr contrast_image(gdImagePtr in_img){
 	
 	gdImagePtr out_img;
 	
@@ -448,4 +448,34 @@ void* thread_func(void* params){
 	gdImageDestroy(out_img);
 			
 	return NULL;
+}
+
+/******************************************************************************
+ * write_times()
+ *
+ * Arguments: directory
+ * Returns: NULL
+ * Side-Effects: none
+ *
+ * Description: writes a .txt with the times for each number of threads
+ *
+ *****************************************************************************/
+void write_times(char* directory, int num_threads, struct timespec){
+	char *file_path = (char *)malloc(sizeof(char) * 256);  
+	sprintf(file_path, "%s%s/timing_%d", directory, OLD_IMAGE_DIR, num_threads);
+
+    // Open the file for writing
+    FILE *file = fopen(file_path, "w");
+
+    if (file == NULL) {
+        perror("Error opening file");
+        return 1;
+    }
+
+	// Write current time to the file
+	fprintf(file, "Current Time: %s\n",);
+
+	// Close the file
+	fclose(file);
+	return;
 }

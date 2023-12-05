@@ -103,7 +103,9 @@ struct timespec total_time = diff_timespec(&end_time_total, &start_time_total);
     printf("\tpar \t %10jd.%09ld\n", par_time.tv_sec, par_time.tv_nsec);
     printf("total \t %10jd.%09ld\n", total_time.tv_sec, total_time.tv_nsec);
 
-
+	/* write timing_<n>.txt */
+	write_times(argv[1], thread_num, );
+	
 	exit(0);
 }
 
