@@ -4,7 +4,7 @@
 #include <assert.h>
 #include <time.h>
 #include <string.h>/* the directories wher output files will be placed */
-#define OLD_IMAGE_DIR "./Old-image-dir/"
+#define OLD_IMAGE_DIR "/Old-image-PAR-A"
 
 /******************************************************************************
  * texture_image()
@@ -246,17 +246,23 @@ int write_jpeg_file(gdImagePtr write_img, char * file_name){
  * Description: Create a directory. 
  *
  *****************************************************************************/
-int create_directory(char * dir_name){
+int create_directory(char * dir_name, char* folder){
 
-	DIR * d = opendir(dir_name);
+	char* pre_dir = malloc(sizeof(char) * (strlen(folder) + strlen(dir_name) + 1));
+	strcpy(pre_dir, folder);
+
+	DIR * d = opendir(strcat(pre_dir, dir_name));
+	printf("%s\n", pre_dir);
 	if (d == NULL){
-		if (mkdir(dir_name, 0777)!=0){
+		if (mkdir(pre_dir, 0777)!=0){
+			free(pre_dir);
 			return 0;
 		}
 	}else{
 		fprintf(stderr, "%s directory already existent\n", dir_name);
 		closedir(d);
 	}
+	free(pre_dir);
 	return 1;
 }
 
@@ -316,7 +322,9 @@ char** get_images(char *folder){
         }
 
         /* Allocate memory for the new string */
-        char *newImage = strdup(line);
+        char* newImage = malloc(strlen(line) + 2);  /* +2 for '/' and '\0' */
+        strcpy(newImage + 1, line);  /* Copy the original string after the '/' character */
+        newImage[0] = '/';  /* Add '/' character at the beginning */
 
         /* Resize the array of strings */
         if (n_images == array_cap) {
@@ -411,27 +419,30 @@ void* thread_func(void* params){
 
 	gdImagePtr out_img;
 	char filepath[256];
+	
+	strcpy(filepath, thread_params->arg);
+	strcat(filepath, thread_params->file);
+	printf("image %s\n", filepath);
 
-	sprintf(filepath, "%s/%s", thread_params->arg, thread_params->file);
-			printf("image %s\n", thread_params->file);
-			/* load of the input file */
-			gdImagePtr in_img = read_jpeg_file(filepath);
-			if (in_img == NULL){
-				printf("Impossible to read %s image\n", thread_params->file);
-				return NULL; 
-			}
-			
-			out_img = image_transform(in_img, thread_params->png_img);
+	/* load of the input file */
+	gdImagePtr in_img = read_jpeg_file(filepath);
+	if (in_img == NULL){
+		printf("Impossible to read %s image\n", thread_params->file);
+		return NULL; 
+	}
+	
+	out_img = image_transform(in_img, thread_params->png_img);
 
-			/* save resized */ 
-			sprintf(out_file_name, "%s%s", OLD_IMAGE_DIR, thread_params->file);
+	/* save resized */ 
+	
+	sprintf(out_file_name, "%s%s%s", thread_params->arg, OLD_IMAGE_DIR, thread_params->file);
 
-			if(write_jpeg_file(out_img, out_file_name) == 0){
-				fprintf(stderr, "Impossible to write %s image\n", out_file_name);
-			}
-			
-			gdImageDestroy(in_img);
-			gdImageDestroy(out_img);
+	if(write_jpeg_file(out_img, out_file_name) == 0){
+		fprintf(stderr, "Impossible to write %s image\n", out_file_name);
+	}
+	
+	gdImageDestroy(in_img);
+	gdImageDestroy(out_img);
 			
 	return NULL;
 }

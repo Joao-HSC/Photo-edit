@@ -40,7 +40,6 @@ int main(int argc, char *argv[]){
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time_total);
 	clock_gettime(CLOCK_MONOTONIC, &start_time_seq);
-
 	/* array containg the names of files to be processed	 */
 	char **files =  get_images(argv[1]);
 
@@ -48,7 +47,7 @@ int main(int argc, char *argv[]){
 	gdImagePtr in_img;
 
 	/* creation of output directories */
-	if (create_directory(OLD_IMAGE_DIR) == 0){
+	if (create_directory(OLD_IMAGE_DIR, argv[1]) == 0){
 		fprintf(stderr, "Impossible to create %s directory\n", OLD_IMAGE_DIR);
 		exit(-1);
 	}

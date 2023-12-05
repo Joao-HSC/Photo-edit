@@ -1,5 +1,5 @@
 #include "gd.h"
-#define OLD_IMAGE_DIR "./Old-image-dir/"
+#define OLD_IMAGE_DIR "/Old-image-PAR-A"
 
 /******************************************************************************
  * texture_image()
@@ -117,7 +117,7 @@ int write_jpeg_file(gdImagePtr write_img, char * file_name);
  * Description: Create a directory. 
  *
  *****************************************************************************/
-int create_directory(char * dir_name);
+int create_directory(char * dir_name, char* pre_dir);
 
 /******************************************************************************
  * get_images()
