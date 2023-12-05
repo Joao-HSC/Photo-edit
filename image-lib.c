@@ -322,9 +322,7 @@ char** get_images(char *folder){
         }
 
         /* Allocate memory for the new string */
-        char* newImage = malloc(strlen(line) + 2);  /* +2 for '/' and '\0' */
-        strcpy(newImage + 1, line);  /* Copy the original string after the '/' character */
-        newImage[0] = '/';  /* Add '/' character at the beginning */
+        char* newImage = strdup(line);
 
         /* Resize the array of strings */
         if (n_images == array_cap) {
@@ -415,19 +413,23 @@ void* thread_func(void* params){
 	Thread_params* thread_params = (Thread_params*)params;
 	
 	/* file name of the image created and to be saved on disk	 */
-	char out_file_name[100];
+	char* out_file_name = malloc(256 * sizeof(char));
 
 	gdImagePtr out_img;
-	char filepath[256];
-	
-	strcpy(filepath, thread_params->arg);
-	strcat(filepath, thread_params->file);
+
+	char* filepath = malloc(256 * sizeof(char));
+	sprintf(filepath, "%s/%s", thread_params->arg, thread_params->file);
+	filepath = realloc(filepath, strlen(filepath) + 1);
+
 	printf("image %s\n", filepath);
 
 	/* load of the input file */
 	gdImagePtr in_img = read_jpeg_file(filepath);
 	if (in_img == NULL){
 		printf("Impossible to read %s image\n", thread_params->file);
+		free(filepath);
+		free(out_file_name);
+		gdImageDestroy(in_img);
 		return NULL; 
 	}
 	
@@ -435,12 +437,13 @@ void* thread_func(void* params){
 
 	/* save resized */ 
 	
-	sprintf(out_file_name, "%s%s%s", thread_params->arg, OLD_IMAGE_DIR, thread_params->file);
-
+	sprintf(out_file_name, "%s%s/%s", thread_params->arg, OLD_IMAGE_DIR, thread_params->file);
+	out_file_name = realloc(out_file_name, strlen(out_file_name) + 1);
 	if(write_jpeg_file(out_img, out_file_name) == 0){
 		fprintf(stderr, "Impossible to write %s image\n", out_file_name);
 	}
-	
+	free(filepath);
+	free(out_file_name);
 	gdImageDestroy(in_img);
 	gdImageDestroy(out_img);
 			
