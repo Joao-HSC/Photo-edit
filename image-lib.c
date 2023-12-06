@@ -282,10 +282,10 @@ int create_directory(char * dir_name, char* folder){
 struct timespec diff_timespec(const struct timespec *time1, const struct timespec *time0) {
   assert(time1);
   assert(time0);
-  struct timespec diff = {.tv_sec = time1->tv_sec - time0->tv_sec, //
+  struct timespec diff = {.tv_sec = time1->tv_sec - time0->tv_sec,
       .tv_nsec = time1->tv_nsec - time0->tv_nsec};
   if (diff.tv_nsec < 0) {
-    diff.tv_nsec += 1000000000; // nsec/sec
+    diff.tv_nsec += 1000000000; /* nsec/sec */
     diff.tv_sec--;
   }
   return diff;
@@ -408,10 +408,20 @@ gdImagePtr image_transform(gdImagePtr input, gdImagePtr png_transform){
  *
  *****************************************************************************/
 void* thread_func(void* params){
+	struct timespec start_time;
+	struct timespec end_time;
+	struct timespec *thr_time = malloc(sizeof(struct timespec));
+	
+	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
 	/* copy of the struct */
 	Thread_params* thread_params = (Thread_params*)params;
-	
+
+	if(thread_params->file == NULL){
+		clock_gettime(CLOCK_MONOTONIC, &end_time);
+		*thr_time = diff_timespec(&end_time, &start_time);
+		return (void *) thr_time; 
+	}
 	/* file name of the image created and to be saved on disk	 */
 	char* out_file_name = malloc(256 * sizeof(char));
 
@@ -430,7 +440,7 @@ void* thread_func(void* params){
 		free(filepath);
 		free(out_file_name);
 		gdImageDestroy(in_img);
-		return NULL; 
+		return NULL;
 	}
 	
 	out_img = image_transform(in_img, thread_params->png_img);
@@ -446,36 +456,10 @@ void* thread_func(void* params){
 	free(out_file_name);
 	gdImageDestroy(in_img);
 	gdImageDestroy(out_img);
+
+	clock_gettime(CLOCK_MONOTONIC, &end_time);
+	*thr_time = diff_timespec(&end_time, &start_time);
 			
-	return NULL;
+	return (void *) thr_time;
 }
 
-/******************************************************************************
- * write_times()
- *
- * Arguments: directory
- * Returns: NULL
- * Side-Effects: none
- *
- * Description: writes a .txt with the times for each number of threads
- *
- *****************************************************************************/
-void write_times(char* directory, int num_threads, struct timespec){
-	char *file_path = (char *)malloc(sizeof(char) * 256);  
-	sprintf(file_path, "%s%s/timing_%d", directory, OLD_IMAGE_DIR, num_threads);
-
-    // Open the file for writing
-    FILE *file = fopen(file_path, "w");
-
-    if (file == NULL) {
-        perror("Error opening file");
-        return 1;
-    }
-
-	// Write current time to the file
-	fprintf(file, "Current Time: %s\n",);
-
-	// Close the file
-	fclose(file);
-	return;
-}

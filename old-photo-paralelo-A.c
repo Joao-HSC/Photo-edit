@@ -60,52 +60,74 @@ int main(int argc, char *argv[]){
 	/* thread initialization */
 	pthread_t thread_id[thread_num];
 
+	/* open timing_n.txt file */
+	char timing[256];
+	sprintf(timing, "%s%s%d", argv[1], "/timing_", thread_num);
+	FILE *timing_n = fopen(timing, "w");
+
 	/* Iteration over all the files to resize images */
-	int i = 0;
-	int aux = thread_num;
+	int aux = 0;
 	
 	/* we can pass multiple elements through a single argument by using a struct */
-	Thread_params* params[thread_num];
+	struct timespec* result[thread_num]; /* execution time */
 
-	while (files[i] != NULL) {
-		for (int j = 0; j < thread_num; j++) {
-			if (files[i] == NULL) {
-				aux = j;  /* update the outer aux variable */
-				break;    /* exit the loop when files[i] is NULL */
+	for (int i = 0; i < thread_num; i++) {
+    	result[i] = malloc(sizeof(struct timespec));
+	}
+
+	/* mark the files array index which has a NULL object */
+	int j = 0;
+	while(files[j] != NULL){
+		j++;
+		if(files[j] == NULL) aux = j;
+	}
+
+	j = 0;
+	while(j < aux){
+
+		Thread_params* params[thread_num];
+		for (int i = 0; i < thread_num; i++) {
+			params[i] = malloc(sizeof(Thread_params));
+			params[i]->arg = argv[1];
+			params[i]->png_img = in_texture_img;
+			if (j + i > aux) { 
+				params[i]->file = NULL;
+			} else {
+				params[i]->file = files[i + j]; 
 			}
-
-			params[j] = malloc(sizeof(Thread_params));
-			params[j]->arg = argv[1];
-			params[j]->png_img = in_texture_img;
-			params[j]->file = files[i];
-
-			pthread_create(&thread_id[j], NULL, thread_func, (void*)params[j]);
-
-			i++;
+			pthread_create(&thread_id[i], NULL, thread_func, (void*)params[i]);
 		}
 
 		/* wait for threads to finish */
-		for (int k = 0; k < aux; k++) {
-			pthread_join(thread_id[k], NULL);
+		for (int k = 0; k < thread_num; k++) {
+			pthread_join(thread_id[k], (void **)result[k]);
+
+			printf("Thread %d result: %10jd.%09ld seconds\n", k, result[k]->tv_sec, result[k]->tv_nsec); // %.9Lf prints up to 9 decimal places
+
 			free(params[k]);
 		}
+		j += thread_num;
+	
 	}
+	
+	for (int j = 0; j < thread_num; j++) {
+    	free(result[j]);
+	}
+
 	free_array(files);
 
 	clock_gettime(CLOCK_MONOTONIC, &end_time_par);
 	clock_gettime(CLOCK_MONOTONIC, &end_time_total);
 
-
-struct timespec par_time = diff_timespec(&end_time_par, &start_time_par);
-struct timespec seq_time = diff_timespec(&end_time_seq, &start_time_seq);
-struct timespec total_time = diff_timespec(&end_time_total, &start_time_total);
+	struct timespec par_time = diff_timespec(&end_time_par, &start_time_par);
+	struct timespec seq_time = diff_timespec(&end_time_seq, &start_time_seq);
+	struct timespec total_time = diff_timespec(&end_time_total, &start_time_total);
     printf("\tseq \t %10jd.%09ld\n", seq_time.tv_sec, seq_time.tv_nsec);
     printf("\tpar \t %10jd.%09ld\n", par_time.tv_sec, par_time.tv_nsec);
     printf("total \t %10jd.%09ld\n", total_time.tv_sec, total_time.tv_nsec);
+	fprintf(timing_n, "total %d %10jd.%09ld\n", thread_num, total_time.tv_sec, total_time.tv_nsec);
+	fclose(timing_n);
 
-	/* write timing_<n>.txt */
-	write_times(argv[1], thread_num, );
-	
 	exit(0);
 }
 
