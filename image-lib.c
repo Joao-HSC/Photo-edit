@@ -446,7 +446,6 @@ void* thread_func(void* params){
 	out_img = image_transform(in_img, thread_params->png_img);
 
 	/* save resized */ 
-	
 	sprintf(out_file_name, "%s%s/%s", thread_params->arg, OLD_IMAGE_DIR, thread_params->file);
 	out_file_name = realloc(out_file_name, strlen(out_file_name) + 1);
 	if(write_jpeg_file(out_img, out_file_name) == 0){

@@ -2,10 +2,11 @@
  * Programacao Concorrente
  * MEEC 21/22
  *
- * Projecto - Parte1
- *                           serial-complexo.c
+ * Projecto - Parte A
+ *                           paralelo.c
  * 
- * Compilacao: gcc serial-complexo -o serial-complex -lgd
+ * Compilacao: gcc old-photo-paralelo-A.c image-lib.c -g -o
+ * 			   old-photo-paralelo-A -lgd
  *           
  *****************************************************************************/
 
@@ -40,6 +41,7 @@ int main(int argc, char *argv[]){
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time_total);
 	clock_gettime(CLOCK_MONOTONIC, &start_time_seq);
+
 	/* array containg the names of files to be processed	 */
 	char **files =  get_images(argv[1]);
 
@@ -101,14 +103,15 @@ int main(int argc, char *argv[]){
 		for (int k = 0; k < thread_num; k++) {
 			pthread_join(thread_id[k], &timer);
 			result[k] = *(struct timespec*) timer;
-			printf("Thread %d result: %10jd.%09ld seconds\n", k, result[k].tv_sec, result[k].tv_nsec);
+			fprintf(timing_n, "Thread_%d %10jd.%09ld\n", k, result[k].tv_sec, result[k].tv_nsec);
+			printf("Thread_%d %10jd.%09ld seconds\n", k, result[k].tv_sec, result[k].tv_nsec);
 
 			free(params[k]);
 		}
 		j += thread_num;
 	
 	}
-	
+
     free(result);
 
 	free_array(files);
