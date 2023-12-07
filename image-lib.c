@@ -87,7 +87,7 @@ gdImagePtr contrast_image(gdImagePtr in_img){
 	
 	gdImagePtr out_img;
 	
-	out_img =  gdImageClone (in_img);
+	out_img =  gdImageClone(in_img);
 	if (!out_img) {
 		return NULL;
 	}

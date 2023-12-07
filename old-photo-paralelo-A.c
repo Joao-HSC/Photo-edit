@@ -69,11 +69,9 @@ int main(int argc, char *argv[]){
 	int aux = 0;
 	
 	/* we can pass multiple elements through a single argument by using a struct */
-	struct timespec* result[thread_num]; /* execution time */
+	struct timespec *result; /* execution time */
 
-	for (int i = 0; i < thread_num; i++) {
-    	result[i] = malloc(sizeof(struct timespec));
-	}
+    result = malloc(thread_num * sizeof(struct timespec));
 
 	/* mark the files array index which has a NULL object */
 	int j = 0;
@@ -98,11 +96,12 @@ int main(int argc, char *argv[]){
 			pthread_create(&thread_id[i], NULL, thread_func, (void*)params[i]);
 		}
 
+		void* timer = malloc(sizeof(void*));
 		/* wait for threads to finish */
 		for (int k = 0; k < thread_num; k++) {
-			pthread_join(thread_id[k], (void **)result[k]);
-
-			printf("Thread %d result: %10jd.%09ld seconds\n", k, result[k]->tv_sec, result[k]->tv_nsec); // %.9Lf prints up to 9 decimal places
+			pthread_join(thread_id[k], &timer);
+			result[k] = *(struct timespec*) timer;
+			printf("Thread %d result: %10jd.%09ld seconds\n", k, result[k].tv_sec, result[k].tv_nsec);
 
 			free(params[k]);
 		}
@@ -110,9 +109,7 @@ int main(int argc, char *argv[]){
 	
 	}
 	
-	for (int j = 0; j < thread_num; j++) {
-    	free(result[j]);
-	}
+    free(result);
 
 	free_array(files);
 
