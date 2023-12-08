@@ -60,30 +60,29 @@ int main(int argc, char *argv[]){
 	/* open timing_n.txt file */
 	char timing[256];
 	sprintf(timing, "%s%s%d", argv[1], "/timing_", thread_num);
-	FILE *timing_n = fopen(timing, "w");
-
-	/* Iteration over all the files to resize images */
-	int aux = 0;
+	FILE *timing_n = fopen(timing, "a");
 	
-	/* memory to store the timer values */
-	struct timespec *result; /* execution time */
-
+	/* alloc vector so we can store the execution time values of each thread */
+	struct timespec *result; 
     result = malloc(thread_num * sizeof(struct timespec));
-
 	/* mark the files array index which has a NULL object */
 	int j = 0;
+	int aux = 0;
 	while(files[j] != NULL){
 		j++;
 		if(files[j] == NULL) aux = j;
 	}
-
 	j = 0;
+
+	/* Iteration over all the files to resize images */
 	while(j < aux){
+
 		/* initialize vector to store binary (0 and -1) between a file being accessible or not */
 		int file_ok[thread_num];
 		/* we can pass multiple elements through a single argument by using a struct */
 		Thread_params* params[thread_num];
 		for (int i = 0; i < thread_num; i++) {
+
 			params[i] = malloc(sizeof(Thread_params));
 			params[i]->arg = argv[1];
 			params[i]->png_img = in_texture_img;
@@ -92,14 +91,16 @@ int main(int argc, char *argv[]){
 			} else {
 				params[i]->file = files[i + j]; 
 			}
+
 			/* check to see if the file has already been parsed */
 			char path[256]; 
-			sprintf(path, "%s/%s/%s", argv[1] ,OLD_IMAGE_DIR, params[i]->file);
+			sprintf(path, "%s/%s/%s", argv[1], OLD_IMAGE_DIR, params[i]->file);
 			file_ok[i] = access(path, F_OK);
 			/* create thread if file is not accessible */
 			if(file_ok[i] == -1){
 				pthread_create(&thread_id[i], NULL, thread_func, (void*)params[i]);
 			}
+			
 		}
 
 		void* timer = malloc(sizeof(void*));

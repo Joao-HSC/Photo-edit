@@ -1,4 +1,5 @@
 #include "gd.h"
+#include <unistd.h>
 #define OLD_IMAGE_DIR "/Old-image-PAR-A"
 
 /******************************************************************************

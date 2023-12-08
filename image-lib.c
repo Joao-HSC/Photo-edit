@@ -252,7 +252,7 @@ int create_directory(char * dir_name, char* folder){
 	strcpy(pre_dir, folder);
 
 	DIR * d = opendir(strcat(pre_dir, dir_name));
-	printf("%s\n", pre_dir);
+	//printf("%s\n", pre_dir);
 	if (d == NULL){
 		if (mkdir(pre_dir, 0777)!=0){
 			free(pre_dir);
@@ -263,6 +263,7 @@ int create_directory(char * dir_name, char* folder){
 		closedir(d);
 	}
 	free(pre_dir);
+	
 	return 1;
 }
 
@@ -408,6 +409,7 @@ gdImagePtr image_transform(gdImagePtr input, gdImagePtr png_transform){
  *
  *****************************************************************************/
 void* thread_func(void* params){
+
 	struct timespec start_time;
 	struct timespec end_time;
 	struct timespec *thr_time = malloc(sizeof(struct timespec));
@@ -415,6 +417,8 @@ void* thread_func(void* params){
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
 	/* copy of the struct */
+	/* check to see if the file has already been parsed */
+	
 	Thread_params* thread_params = (Thread_params*)params;
 
 	if(thread_params->file == NULL){
@@ -431,12 +435,12 @@ void* thread_func(void* params){
 	sprintf(filepath, "%s/%s", thread_params->arg, thread_params->file);
 	filepath = realloc(filepath, strlen(filepath) + 1);
 
-	printf("image %s\n", filepath);
+	//printf("image %s\n", filepath);
 
 	/* load of the input file */
 	gdImagePtr in_img = read_jpeg_file(filepath);
 	if (in_img == NULL){
-		printf("Impossible to read %s image\n", thread_params->file);
+		//printf("Impossible to read %s image\n", thread_params->file);
 		free(filepath);
 		free(out_file_name);
 		gdImageDestroy(in_img);
