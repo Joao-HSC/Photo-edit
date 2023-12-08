@@ -60,7 +60,7 @@ int main(int argc, char *argv[]){
 	/* open timing_n.txt file */
 	char timing[256];
 	sprintf(timing, "%s%s%d", argv[1], "/timing_", thread_num);
-	FILE *timing_n = fopen(timing, "a");
+	FILE *timing_n = fopen(timing, "w");
 	
 	/* alloc vector so we can store the execution time values of each thread */
 	struct timespec *result; 
@@ -74,6 +74,13 @@ int main(int argc, char *argv[]){
 	}
 	j = 0;
 
+	Thread_times* times[thread_num];
+	for(int i = 0; i < thread_num; i++){
+		times[i] = malloc(sizeof(Thread_times));
+		times[i]->time_sec = 0; 
+		times[i]->time_nsec = 0; 
+		times[i]->n_images = 0;
+	}
 	/* Iteration over all the files to resize images */
 	while(j < aux){
 
@@ -109,7 +116,11 @@ int main(int argc, char *argv[]){
 			if(file_ok[k] == -1){
 				pthread_join(thread_id[k], &timer);
 				result[k] = *(struct timespec*) timer;
-				fprintf(timing_n, "Thread_%d %10jd.%09ld\n", k, result[k].tv_sec, result[k].tv_nsec);
+				times[k]->time_sec += result[k].tv_sec;
+				times[k]->time_sec += result[k].tv_nsec;
+				if(params[k]->file != NULL){
+					times[k]->n_images += 1;
+				}
 				free(params[k]);
 			}
 		}
@@ -125,6 +136,11 @@ int main(int argc, char *argv[]){
 
 	struct timespec total_time = diff_timespec(&end_time_total, &start_time_total);
 	fprintf(timing_n, "total %d %10jd.%09ld\n", thread_num, total_time.tv_sec, total_time.tv_nsec);
+
+	for(int i = 0; i < thread_num; i++){
+		fprintf(timing_n, "Thread_%d %d %10jd.%09ld\n", i, times[i]->n_images, times[i]->time_sec, times[i]->time_nsec);
+		free(times[i]);
+	}
 	fclose(timing_n);
 
 	exit(0);

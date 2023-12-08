@@ -259,7 +259,7 @@ int create_directory(char * dir_name, char* folder){
 			return 0;
 		}
 	}else{
-		fprintf(stderr, "%s directory already existent\n", dir_name);
+		//fprintf(stderr, "%s directory already existent\n", dir_name);
 		closedir(d);
 	}
 	free(pre_dir);

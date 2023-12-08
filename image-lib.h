@@ -169,23 +169,18 @@ gdImagePtr image_transform(gdImagePtr input, gdImagePtr png_transform);
  *****************************************************************************/
 void* thread_func(void* params);
 
-/******************************************************************************
- * write_times()
- *
- * Arguments: directory
- * Returns: NULL
- * Side-Effects: none
- *
- * Description: writes a .txt with the times for each number of threads
- *
- *****************************************************************************/
-void write_times(char* directory, int num_threads, struct timespec);
-
 /* structure for the thread parameters */
 typedef struct{
     char* arg;
     char* file;
     gdImagePtr png_img;
 } Thread_params;
+
+/* structure for the thread times */
+typedef struct{
+    long time_sec;
+    long time_nsec;
+    int n_images;
+} Thread_times;
 
 struct timespec diff_timespec(const struct timespec *time1, const struct timespec *time0);
