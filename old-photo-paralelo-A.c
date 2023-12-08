@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <time.h> 
 #include <pthread.h>
+#include <unistd.h>
 #include "image-lib.h"
 
 /******************************************************************************
@@ -33,16 +34,13 @@
  *****************************************************************************/
 int main(int argc, char *argv[]){
     struct timespec start_time_total, end_time_total;
-    struct timespec start_time_seq, end_time_seq;
-    struct timespec start_time_par, end_time_par;
 
 	if(argc != 3) return 0;
 	int thread_num = atoi(argv[2]);
 
 	clock_gettime(CLOCK_MONOTONIC, &start_time_total);
-	clock_gettime(CLOCK_MONOTONIC, &start_time_seq);
 
-	/* array containg the names of files to be processed	 */
+	/* array containg the names of files to be processed */
 	char **files =  get_images(argv[1]);
 
 	/* input images */
@@ -56,9 +54,6 @@ int main(int argc, char *argv[]){
 
 	gdImagePtr in_texture_img =  read_png_file("./paper-texture.png");
 
-	clock_gettime(CLOCK_MONOTONIC, &end_time_seq);
-	clock_gettime(CLOCK_MONOTONIC, &start_time_par);
-
 	/* thread initialization */
 	pthread_t thread_id[thread_num];
 
@@ -70,7 +65,7 @@ int main(int argc, char *argv[]){
 	/* Iteration over all the files to resize images */
 	int aux = 0;
 	
-	/* we can pass multiple elements through a single argument by using a struct */
+	/* memory to store the timer values */
 	struct timespec *result; /* execution time */
 
     result = malloc(thread_num * sizeof(struct timespec));
@@ -84,7 +79,9 @@ int main(int argc, char *argv[]){
 
 	j = 0;
 	while(j < aux){
-
+		/* initialize vector to store binary (0 and -1) between a file being accessible or not */
+		int file_ok[thread_num];
+		/* we can pass multiple elements through a single argument by using a struct */
 		Thread_params* params[thread_num];
 		for (int i = 0; i < thread_num; i++) {
 			params[i] = malloc(sizeof(Thread_params));
@@ -95,36 +92,37 @@ int main(int argc, char *argv[]){
 			} else {
 				params[i]->file = files[i + j]; 
 			}
-			pthread_create(&thread_id[i], NULL, thread_func, (void*)params[i]);
+			/* check to see if the file has already been parsed */
+			char path[256]; 
+			sprintf(path, "%s/%s/%s", argv[1] ,OLD_IMAGE_DIR, params[i]->file);
+			file_ok[i] = access(path, F_OK);
+			/* create thread if file is not accessible */
+			if(file_ok[i] == -1){
+				pthread_create(&thread_id[i], NULL, thread_func, (void*)params[i]);
+			}
 		}
 
 		void* timer = malloc(sizeof(void*));
 		/* wait for threads to finish */
 		for (int k = 0; k < thread_num; k++) {
-			pthread_join(thread_id[k], &timer);
-			result[k] = *(struct timespec*) timer;
-			fprintf(timing_n, "Thread_%d %10jd.%09ld\n", k, result[k].tv_sec, result[k].tv_nsec);
-			printf("Thread_%d %10jd.%09ld seconds\n", k, result[k].tv_sec, result[k].tv_nsec);
-
-			free(params[k]);
+			if(file_ok[k] == -1){
+				pthread_join(thread_id[k], &timer);
+				result[k] = *(struct timespec*) timer;
+				fprintf(timing_n, "Thread_%d %10jd.%09ld\n", k, result[k].tv_sec, result[k].tv_nsec);
+				free(params[k]);
+			}
 		}
+		free(timer);
 		j += thread_num;
 	
 	}
 
     free(result);
-
 	free_array(files);
 
-	clock_gettime(CLOCK_MONOTONIC, &end_time_par);
 	clock_gettime(CLOCK_MONOTONIC, &end_time_total);
 
-	struct timespec par_time = diff_timespec(&end_time_par, &start_time_par);
-	struct timespec seq_time = diff_timespec(&end_time_seq, &start_time_seq);
 	struct timespec total_time = diff_timespec(&end_time_total, &start_time_total);
-    printf("\tseq \t %10jd.%09ld\n", seq_time.tv_sec, seq_time.tv_nsec);
-    printf("\tpar \t %10jd.%09ld\n", par_time.tv_sec, par_time.tv_nsec);
-    printf("total \t %10jd.%09ld\n", total_time.tv_sec, total_time.tv_nsec);
 	fprintf(timing_n, "total %d %10jd.%09ld\n", thread_num, total_time.tv_sec, total_time.tv_nsec);
 	fclose(timing_n);
 
