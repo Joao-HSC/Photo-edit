@@ -337,7 +337,6 @@ char** get_images(char *folder){
 	images = realloc(images, (n_images + 1) * sizeof(char *));
   
     images[n_images] = NULL;
-
 	fclose(image_txt);
 
 	return images;
@@ -362,6 +361,7 @@ void free_array(char** array){
 		free(array[i]);
 		i++;
 	}
+	free(array);
 
 	return;
 }
@@ -469,6 +469,7 @@ void* thread_func(void* thread_n){
 	*thr_time = diff_timespec(&end_time, &start_time);
 	fprintf(timing_n, "thread_%d %d %10jd.%09ld\n", (intptr_t)thread_n, n_images, thr_time->tv_sec, thr_time->tv_nsec);
 
+	gdImageDestroy(thread_params->png_img);
 	free(thread_params);
 	free(thr_time);
 	free(image_t);

@@ -363,6 +363,7 @@ void free_array(char** array){
 		free(array[i]);
 		i++;
 	}
+	free(array);
 
 	return;
 }
@@ -386,13 +387,12 @@ gdImagePtr image_transform(gdImagePtr input, gdImagePtr png_transform){
 
 	out_contrast_img = contrast_image(input);
 	out_smoothed_img = smooth_image(out_contrast_img);
-	out_textured_img = texture_image(out_smoothed_img , png_transform);
-	out_sepia_img = sepia_image(out_textured_img); 
-
-	/* save resized */
 	gdImageDestroy(out_contrast_img); 
+	out_textured_img = texture_image(out_smoothed_img , png_transform);
 	gdImageDestroy(out_smoothed_img);
+	out_sepia_img = sepia_image(out_textured_img); 
 	gdImageDestroy(out_textured_img);
+
 
 	return out_sepia_img;
 }
@@ -417,8 +417,6 @@ void* thread_func(void* params){
 	clock_gettime(CLOCK_MONOTONIC, &start_time);
 
 	/* copy of the struct */
-	/* check to see if the file has already been parsed */
-	
 	Thread_params* thread_params = (Thread_params*)params;
 
 	if(thread_params->file == NULL){
@@ -434,7 +432,6 @@ void* thread_func(void* params){
 	char* filepath = malloc(256 * sizeof(char));
 	sprintf(filepath, "%s/%s", thread_params->arg, thread_params->file);
 	filepath = realloc(filepath, strlen(filepath) + 1);
-
 
 	/* load of the input file */
 	gdImagePtr in_img = read_jpeg_file(filepath);
@@ -453,6 +450,7 @@ void* thread_func(void* params){
 	if(write_jpeg_file(out_img, out_file_name) == 0){
 		fprintf(stderr, "Impossible to write %s image\n", out_file_name);
 	}
+
 	free(filepath);
 	free(out_file_name);
 	gdImageDestroy(in_img);
@@ -460,7 +458,7 @@ void* thread_func(void* params){
 
 	clock_gettime(CLOCK_MONOTONIC, &end_time);
 	*thr_time = diff_timespec(&end_time, &start_time);
-			
+	
 	return (void *) thr_time;
 }
 

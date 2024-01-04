@@ -108,8 +108,8 @@ int main(int argc, char *argv[]){
 			
 		}
 
-		void* timer = malloc(sizeof(void*));
 		/* wait for threads to finish */
+		void* timer;
 		for (int k = 0; k < thread_num; k++) {
 			if(file_ok[k] == -1){
 				pthread_join(thread_id[k], &timer);
@@ -122,10 +122,10 @@ int main(int argc, char *argv[]){
 		}
 		free(timer);
 		j += thread_num;
-	
 	}
-
-        free(result);
+	
+	gdImageDestroy(in_texture_img);
+    free(result);
 	free_array(files);
 
 	clock_gettime(CLOCK_MONOTONIC, &end_time_total);
@@ -137,6 +137,7 @@ int main(int argc, char *argv[]){
 		fprintf(timing_n, "Thread_%d %d %10jd.%09ld\n", i, times[i]->n_images, times[i]->time.tv_sec, times[i]->time.tv_nsec);
 		free(times[i]);
 	}
+
 	fclose(timing_n);
 
 	exit(0);

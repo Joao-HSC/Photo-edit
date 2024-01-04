@@ -117,6 +117,8 @@ int main(int argc, char *argv[]){
 		pthread_join(thread_id[i], (void*)&images);
 		total_images += (intptr_t)images;
 	}
+
+	for(i = 0; i < cut_off; i++) free(params[i]);
 	
 	free_array(files);
 
