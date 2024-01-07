@@ -1,2 +1,2 @@
-Employed pipes and multi threading for the first time.
+Employed a pipeline and multi threading for the first time.
 
